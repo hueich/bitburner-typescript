@@ -1,5 +1,5 @@
 import { NS } from "@ns";
-import { bfs } from 'bfs';
+import { bfs } from 'algos';
 
 export async function main(ns: NS) {
   const data = ns.flags([

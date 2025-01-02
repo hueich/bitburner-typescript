@@ -45,7 +45,7 @@ async function minimizeSecurity(ns: NS, target: string, host: string) {
   while (ns.getServerSecurityLevel(target) > minSec) {
     const weakenTime = ns.getWeakenTime(target);
     const hostFreeRam = getFreeRam(ns, host);
-    const threads = Math.floor(hostFreeRam / ns.getScriptRam(weakenScript, host));
+    const threads = Math.max(Math.floor(hostFreeRam / ns.getScriptRam(weakenScript, host)), 1);
     ns.exec(weakenScript, host, { threads: threads }, '--target', target, '--threads', threads);
     await ns.sleep(weakenTime + timeGap);
   }
@@ -144,12 +144,12 @@ async function doHWGW(ns: NS, target: string, host: string) {
   const curMoney = ns.getServerMoneyAvailable(target);
   const hackMoneyRatio = ns.hackAnalyze(target);
   const hackMoneyAmount = curMoney * hackMoneyRatio;
-  const hackMoneyAmountTotal = hackMoneyAmount * baseHackThreads;
+  const hackMoneyAmountTotal = Math.min(hackMoneyAmount * baseHackThreads, maxMoney);
 
   const hackSecurityIncrease = ns.hackAnalyzeSecurity(baseHackThreads, target);
   const baseHackWeakenThreads = hackSecurityIncrease / securityPerWeaken;
 
-  const moneyRemaining = curMoney - hackMoneyAmountTotal;
+  const moneyRemaining = Math.max(curMoney - hackMoneyAmountTotal, 0);
 
   let baseGrowThreads = getGrowThreads(ns, target, moneyRemaining, hackMoneyAmountTotal, 1);
   let lastGrowThreads = 0;
@@ -193,12 +193,12 @@ async function doHWGW(ns: NS, target: string, host: string) {
 
   // Make sure target state breaks even.
   let realHackMoney = Math.min(curMoney * hackMoneyRatio * realHackThreads, maxMoney);
-  let realMoneyRemaining = curMoney - realHackMoney;
+  let realMoneyRemaining = Math.max(curMoney - realHackMoney, 0);
   let neededGrowThreads = getGrowThreads(ns, target, realMoneyRemaining, realHackMoney, realGrowThreads);
   while (neededGrowThreads > realGrowThreads) {
     realHackThreads -= 1;
     realHackMoney = Math.min(curMoney * hackMoneyRatio * realHackThreads, maxMoney);
-    realMoneyRemaining = curMoney - realHackMoney;
+    realMoneyRemaining = Math.max(curMoney - realHackMoney, 0);
     neededGrowThreads = getGrowThreads(ns, target, realMoneyRemaining, realHackMoney, realGrowThreads);
   }
 
@@ -234,13 +234,16 @@ async function doHWGW(ns: NS, target: string, host: string) {
   await ns.sleep(maxTime + timeGap);
 }
 
-function getGrowThreads(ns: NS, target: string, moneyBase: number, moneyDelta: number, threads: number = 0): number {
-  // ns.print('getGrowThreads:');
-  // ns.printf('  moneyBase: %f', moneyBase);
-  // ns.printf('  moneyDelta: %f', moneyDelta);
-  // ns.printf('  threads: %f', threads);
+function getGrowThreads(ns: NS, target: string, moneyBase: number, moneyDelta: number, threads: number = 1): number {
   const growthMultiplier = (moneyDelta + moneyBase + threads) / (moneyBase + threads);
-  // ns.printf('  growthMultiplier: %f', growthMultiplier);
+  if (growthMultiplier < 1) {
+    ns.print('getGrowThreads:');
+    ns.printf('  target: %s', target);
+    ns.printf('  growthMultiplier: %f', growthMultiplier);
+    ns.printf('  moneyBase: %f', moneyBase);
+    ns.printf('  moneyDelta: %f', moneyDelta);
+    ns.printf('  threads: %f', threads);
+  }
   return ns.growthAnalyze(target, growthMultiplier);
 }
 

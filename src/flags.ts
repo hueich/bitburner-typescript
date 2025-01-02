@@ -17,19 +17,27 @@ export function parseFlags(ns: NS): Flags {
   ]);
   return {
     target: parseHostname(data.target),
-    sleepMs: parseDuration(data.sleepMs),
+    sleepMs: parseNumber(data.sleepMs),
     threads: parseThreads(data.threads),
   };
 }
 
-export function parseHostname(arg: string[] | ScriptArg): string {
+export function parseString(arg: string[] | ScriptArg): string {
   return typeof arg === 'string' ? arg : '';
 }
 
-export function parseDuration(arg: string[] | ScriptArg): number {
+export function parseHostname(arg: string[] | ScriptArg): string {
+  return parseString(arg);
+}
+
+export function parseNumber(arg: string[] | ScriptArg): number {
   return typeof arg === 'number' ? arg : 0;
 }
 
 export function parseThreads(arg: string[] | ScriptArg): number {
   return typeof arg === 'number' ? Math.max(Math.floor(arg), 1) : 1;
+}
+
+export function parseBoolean(arg: string[] | ScriptArg): boolean {
+  return typeof arg === 'boolean' ? arg : false;
 }
