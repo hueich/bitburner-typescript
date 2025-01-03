@@ -52,7 +52,7 @@ export async function main(ns: NS) {
   const maxServerCost = parseNumber(data.maxServerCost) || ns.getPlayer().money / 250;
   const dryrun = parseBoolean(data.dryrun);
 
-  let targetServers = listServers(ns).filter(function (server): boolean {
+  let targetServers = listServers(ns, /*excludeOwned=*/true).filter(function (server): boolean {
     return server.hasAdminRights
       && !!server.moneyMax && server.moneyMax > 0;
   });

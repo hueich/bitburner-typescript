@@ -82,10 +82,14 @@ export async function growWeaken(ns: NS, target: string, moneyRatio: number = 1.
   ns.printf('Final server state:\n  MaxMoney: %f\n  CurMoney: %f\n  MinSec: %.3f\n  CurSec: %.3f', ns.getServerMaxMoney(target), ns.getServerMoneyAvailable(target), ns.getServerMinSecurityLevel(target), ns.getServerSecurityLevel(target));
 }
 
-export function listServers(ns: NS): Server[] {
+export function listServers(ns: NS, excludeOwned: boolean = false): Server[] {
   const servers: Server[] = [];
   bfs(ns, function (ns: NS, host: string) {
-    servers.push(ns.getServer(host));
+    const s = ns.getServer(host);
+    if (excludeOwned && s.purchasedByPlayer) {
+      return;
+    }
+    servers.push(s);
   });
   return servers;
 }
